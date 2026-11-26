@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Connexion - MediTrust{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="form-title">Connexion</h1>
+  <p class="subtitle">Accedez a votre espace patient ou medecin.</p>
+
+  <form id="login-form">
+    <label for="username">Nom d'utilisateur</label>
+    <input type="text" id="username" name="username" required>
+
+    <label for="password">Mot de passe</label>
+    <input type="password" id="password" name="password" required>
+
+    <button type="submit" class="primary">Se connecter</button>
+  </form>
+
+  <div id="message" class="msg"></div>
+  <div id="token-box" class="token-box" style="display:none;"></div>
+
+  <div class="footer-link">Pas encore de compte ? <a href="/register/">S'inscrire</a></div>
+</div>
+
+<script>
+document.getElementById("login-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const messageEl = document.getElementById("message");
+  const tokenBox = document.getElementById("token-box");
+  messageEl.textContent = "";
+  tokenBox.style.display = "none";
+
+  try {
+    const res = await fetch("/api/auth/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      messageEl.textContent = data.detail || "Erreur de connexion.";
+      messageEl.className = "msg error";
+      return;
+    }
+
+    // NOTE (demo Red Team) : stocker le JWT dans localStorage le rend
+    // lisible par n'importe quel script JS execute sur la page (y compris
+    // un script injecte via XSS), et il est envoye tel quel a chaque appel
+    // API : c'est un des points que la partie Blue Team viendra corriger.
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("username", data.username);
+
+    messageEl.textContent = "Connexion reussie. Redirection...";
+    messageEl.className = "msg success";
+
+    tokenBox.style.display = "block";
+    tokenBox.innerHTML = "<strong>Token recu (demo) :</strong><br>" + data.access_token;
+
+    setTimeout(() => { window.location.href = "/dashboard/"; }, 1200);
+  } catch (err) {
+    messageEl.textContent = "Erreur reseau.";
+    messageEl.className = "msg error";
+  }
+});
+</script>
+{% endblock %}

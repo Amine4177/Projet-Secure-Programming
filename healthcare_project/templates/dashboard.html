@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord - MediTrust{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1 class="form-title">Tableau de bord</h1>
+  <p class="subtitle">
+    Connecte en tant que <strong id="who"></strong>
+    <span class="badge-role" id="role-badge"></span>
+  </p>
+
+  <div id="guard" class="msg error" style="display:none;">
+    Vous n'etes pas connecte. <a href="/login/">Se connecter</a>.
+  </div>
+
+  <div id="content" style="display:none;">
+    <h3>Patients</h3>
+    <table id="patients-table">
+      <thead><tr><th>ID</th><th>Username</th><th>Groupe sanguin</th><th>Allergies</th><th>Antecedents</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Medecins</h3>
+    <table id="doctors-table">
+      <thead><tr><th>ID</th><th>Username</th><th>Specialite</th><th>Licence</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Evaluations (confidentielles)</h3>
+    <table id="evaluations-table">
+      <thead><tr><th>ID</th><th>Patient</th><th>Medecin</th><th>Diagnostic</th><th>Notes</th><th>Traitement</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <button class="primary" id="logout-btn" style="margin-top:24px;background:#b91c1c;">Se deconnecter</button>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem("access_token");
+
+if (!token) {
+  document.getElementById("guard").style.display = "block";
+} else {
+  document.getElementById("content").style.display = "block";
+  document.getElementById("who").textContent = localStorage.getItem("username") || "";
+  document.getElementById("role-badge").textContent = localStorage.getItem("role") || "";
+
+  const authHeaders = { "Authorization": "Bearer " + token };
+
+  async function loadTable(url, tbodyId, rowBuilder) {
+    try {
+      const res = await fetch(url, { headers: authHeaders });
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.results || []);
+      const tbody = document.querySelector("#" + tbodyId + " tbody");
+      tbody.innerHTML = items.map(rowBuilder).join("");
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  loadTable("/api/patients/", "patients-table", (p) =>
+    `<tr><td>${p.id}</td><td>${p.username}</td><td>${p.blood_type || ""}</td><td>${p.allergies || ""}</td><td>${p.medical_history || ""}</td></tr>`
+  );
+
+  loadTable("/api/doctors/", "doctors-table", (d) =>
+    `<tr><td>${d.id}</td><td>${d.username}</td><td>${d.specialty || ""}</td><td>${d.license_number || ""}</td></tr>`
+  );
+
+  loadTable("/api/evaluations/", "evaluations-table", (e) =>
+    `<tr><td>${e.id}</td><td>${e.patient_username}</td><td>${e.doctor_username}</td><td>${e.diagnostic}</td><td>${e.notes || ""}</td><td>${e.treatment || ""}</td></tr>`
+  );
+
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.clear();
+    window.location.href = "/login/";
+  });
+}
+</script>
+{% endblock %}

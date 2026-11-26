@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Inscription - MediTrust{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="form-title">Creer un compte</h1>
+  <p class="subtitle">Inscrivez-vous en tant que patient ou medecin.</p>
+
+  <form id="register-form">
+    <label for="role">Je suis</label>
+    <select id="role" name="role">
+      <option value="patient">Patient</option>
+      <option value="doctor">Docteur</option>
+    </select>
+
+    <label for="username">Nom d'utilisateur</label>
+    <input type="text" id="username" required>
+
+    <label for="email">Email</label>
+    <input type="email" id="email">
+
+    <label for="password">Mot de passe</label>
+    <input type="password" id="password" required>
+
+    <div id="patient-fields">
+      <label for="birth_date">Date de naissance</label>
+      <input type="date" id="birth_date">
+
+      <label for="blood_type">Groupe sanguin</label>
+      <input type="text" id="blood_type" placeholder="ex: O+">
+
+      <label for="allergies">Allergies</label>
+      <textarea id="allergies" rows="2"></textarea>
+
+      <label for="medical_history">Antecedents medicaux</label>
+      <textarea id="medical_history" rows="2"></textarea>
+    </div>
+
+    <div id="doctor-fields" style="display:none;">
+      <label for="specialty">Specialite</label>
+      <input type="text" id="specialty">
+
+      <label for="license_number">Numero de licence</label>
+      <input type="text" id="license_number">
+    </div>
+
+    <button type="submit" class="primary">Creer mon compte</button>
+  </form>
+
+  <div id="message" class="msg"></div>
+  <div class="footer-link">Deja un compte ? <a href="/login/">Se connecter</a></div>
+</div>
+
+<script>
+const roleSelect = document.getElementById("role");
+const patientFields = document.getElementById("patient-fields");
+const doctorFields = document.getElementById("doctor-fields");
+
+roleSelect.addEventListener("change", () => {
+  const isPatient = roleSelect.value === "patient";
+  patientFields.style.display = isPatient ? "block" : "none";
+  doctorFields.style.display = isPatient ? "none" : "block";
+});
+
+document.getElementById("register-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const messageEl = document.getElementById("message");
+
+  const payload = {
+    role: roleSelect.value,
+    username: document.getElementById("username").value,
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value,
+  };
+
+  if (roleSelect.value === "patient") {
+    payload.birth_date = document.getElementById("birth_date").value || null;
+    payload.blood_type = document.getElementById("blood_type").value;
+    payload.allergies = document.getElementById("allergies").value;
+    payload.medical_history = document.getElementById("medical_history").value;
+  } else {
+    payload.specialty = document.getElementById("specialty").value;
+    payload.license_number = document.getElementById("license_number").value;
+  }
+
+  try {
+    const res = await fetch("/api/auth/register/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      messageEl.textContent = JSON.stringify(data);
+      messageEl.className = "msg error";
+      return;
+    }
+
+    messageEl.textContent = "Compte cree. Vous pouvez vous connecter.";
+    messageEl.className = "msg success";
+    setTimeout(() => { window.location.href = "/login/"; }, 1200);
+  } catch (err) {
+    messageEl.textContent = "Erreur reseau.";
+    messageEl.className = "msg error";
+  }
+});
+</script>
+{% endblock %}
