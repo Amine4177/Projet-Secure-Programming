@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion - MediTrust</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+  <!--
+    Ce header est une COPIE visuelle du vrai site (meme nom, meme style).
+    C'est exactement la technique utilisee dans un vrai phishing : rien ne
+    distingue visuellement cette page de la vraie, a part l'URL dans la
+    barre d'adresse du navigateur (ici localhost:9000 au lieu de :8000).
+  -->
+  <nav class="topbar">
+    <div class="brand">🏥 MediTrust</div>
+    <div></div>
+  </nav>
+
+  <div class="container">
+    <h1 class="form-title">Connexion</h1>
+    <p class="subtitle">Accedez a votre espace patient ou medecin.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <label for="username">Nom d'utilisateur</label>
+      <input type="text" id="username" name="username" required>
+
+      <label for="password">Mot de passe</label>
+      <input type="password" id="password" name="password" required>
+
+      <button type="submit" class="primary">Se connecter</button>
+    </form>
+  </div>
+</body>
+</html>
